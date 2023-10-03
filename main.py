@@ -1,3 +1,4 @@
+import time
 from tkinter import Tk, BOTH, Canvas
 
 class Window:
@@ -73,29 +74,31 @@ class Cell:
     def get_y2(self):
         return self.__y2
     
-    def draw(self):
+    def draw(self, x_offset=0, y_offset=0):
         if self.has_left_wall:
-            self.__win.draw_line(Line(Point(self.__x1, self.__y1), Point(self.__x1, self.__y2)), "black")
+            self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y1 + y_offset), Point(self.__x1 + x_offset, self.__y2 + y_offset)), "black")
 
         if self.has_right_wall:
-            self.__win.draw_line(Line(Point(self.__x2, self.__y1), Point(self.__x2, self.__y2)), "black")
+            self.__win.draw_line(Line(Point(self.__x2 + x_offset, self.__y1 + y_offset), Point(self.__x2 + x_offset, self.__y2 + y_offset)), "black")
 
         if self.has_top_wall:
-            self.__win.draw_line(Line(Point(self.__x1, self.__y1), Point(self.__x2, self.__y1)), "black")
+            self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y1 + y_offset), Point(self.__x2 + x_offset, self.__y1 + y_offset)), "black")
             
         if self.has_bottom_wall:
-            self.__win.draw_line(Line(Point(self.__x1, self.__y2), Point(self.__x2, self.__y2)), "black")
+            self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y2 + y_offset), Point(self.__x2 + x_offset, self.__y2 + y_offset)), "black")
 
-    def draw_move(self, to_cell, undo=False):
+    def draw_move(self, to_cell, undo=False, x_offset=0, y_offset=0):
         if undo:
             color = "gray"
         else:
             color = "red"
 
-        self.__win.draw_line(Line(Point((self.__x1 + self.__x2) / 2,
-                                        (self.__y1 + self.__y2) / 2),
-                                        Point((to_cell.get_x1() + to_cell.get_x2()) / 2,
-                                              (to_cell.get_y1() + to_cell.get_y2()) / 2)), color)
+        self.__win.draw_line(Line(Point(((self.__x1 + self.__x2) / 2  + x_offset),
+                                        ((self.__y1 + self.__y2) / 2) + y_offset),
+                                        Point(((to_cell.get_x1() + to_cell.get_x2()) / 2 + x_offset),
+                                              ((to_cell.get_y1() + to_cell.get_y2()) / 2 + y_offset))), color)
+    def __repr__(self):
+        return (f"x1: {self.__x1}, x2: {self.__x2}, y1: {self.__y1}, y2: {self.__y2}")
 
 class Maze:
     def __init__(
@@ -119,30 +122,73 @@ class Maze:
         self._create_cells()
     
     def _create_cells(self):
-        pass
+        
+        width = self.__cell_size_x / 2
+        height = self.__cell_size_y / 2
 
+        for i in range(self.__num_cols):
+            new_column = []
+            for j in range(self.__num_rows):
+                new_column.append(Cell(i + (i * width), i + (i * width) + width, j + (j * height), j + (j * height) + height, self.__win))
+            self._cells.append(new_column)
+               
+        for i in range(self.__num_cols):
+            for j in range(self.__num_cols):
+                self._draw_cell(i, j)
+                
     def _draw_cell(self, i, j):
-        pass
+        self._cells[i][j].draw(self.__x1 + self.__cell_size_x, self.__y1 + self.__cell_size_y)
+        self._animate()
 
     def _animate(self):
-        pass
+        self.__win.redraw()
+        ##time.sleep(2)
 
+    def __repr__(self):
+        output = ""
+        output = f"\nMaze Properties\nX: {self.__x1}\nY: {self.__y1}\nNum_Rows: {self.__num_rows}\nNum_Cols: {self.__num_cols}\nCell Width: {self.__cell_size_x}\nCell Height: {self.__cell_size_y}\n\n"
 
+        for i in range(self.__num_cols):
+            for j in range(self.__num_rows):
+                output += (f"Cell[{i}][{j}]: {self._cells[i][j]}\n")
+
+        return output
+    
 def main():
 
+    ## Create a window
     win = Window(800, 600, "Test Window")
-    point1 = Point(50, 50)
-    point2 = Point(100, 100)
+   
+    ## Create points
+    point1 = Point(700, 500)
+    point2 = Point(800, 600)
+    
+    ## Create  a line from the points
     line1 = Line(point1, point2)
-    ##win.draw_line(line1, "black")
+    
+    ## Test - Draw the newly created line
+    win.draw_line(line1, "black")
 
+    ## Test - Create cells 
     cell1 = Cell(10, 20, 10, 20, win)
     cell2 = Cell(20, 30, 10, 20, win)
     
+    print(cell1)
+    print(cell2)
+
+    ## Draw the cells
     cell1.draw()
     cell2.draw()
+
+    cell1.draw(100,100)
+    cell2.draw(100,100)
     
+    ## Draw a line between the cells    
     cell1.draw_move(cell2)
+    cell1.draw_move(cell2, False, 100, 100)
+
+    new_maze = Maze(400, 300, 5, 5, 50, 50, win)
+
 
     win.wait_for_close()
 
