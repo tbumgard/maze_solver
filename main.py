@@ -1,4 +1,5 @@
 import time
+import random
 from tkinter import Tk, BOTH, Canvas
 
 class Window:
@@ -61,6 +62,7 @@ class Cell:
         self.__y1 = y1
         self.__y2 = y2
         self.__win = win
+        self.visited = False
 
     def get_x1(self):
         return self.__x1
@@ -108,7 +110,8 @@ class Maze:
             num_cols,
             cell_size_x,
             cell_size_y,
-            win=None
+            win=None,
+            seed=None
     ):
         self.__x1 = x1
         self.__y1 = y1
@@ -119,6 +122,8 @@ class Maze:
         self.__win = win
         self._cells = []
         self._create_cells()
+        if seed:
+            random.seed(seed)
     
     def _create_cells(self):
         
@@ -159,15 +164,83 @@ class Maze:
         self._draw_cell(0, 0)
         self._draw_cell(self.__num_cols - 1, self.__num_rows - 1)
 
+    def _break_walls_r(self, i, j):
+        self._cells[i][j].visited = True
+
+        
+        while True:
+            possible_cells = []
+
+            ## Add left cell if exists and not visited 
+            if i > 0:
+                if not self._cells[i-1][j].visited:
+                    possible_cells.append(list((i - 1, j)))
+            ## Add bottom cell if exists and not visited
+            if j < self.__num_rows - 1:
+                if not self._cells[i][j+1].visited:
+                    possible_cells.append(list((i, j + 1)))
+            
+            ## Add right cell if exists and not visited
+            if i < self.__num_cols - 1:
+                if not self._cells[i+1][j].visited:
+                    possible_cells.append(list((i + 1, j)))
+            
+            ## Add top cell if exists and not visited
+            if j > 0:
+                if not self._cells[i][j-1].visited:
+                    possible_cells.append(list((i, j - 1)))
+            
+            ## If the possible cells list is empty break out of the loop
+            if possible_cells == []:
+                self._draw_cell(i,j)
+                return
+        
+            ## Choose a random cell from the possible cells list
+            chosen_cell = possible_cells[random.randrange(len(possible_cells))]
+
+            ## Check if chosen cell shares left or right
+            if chosen_cell[1] == j:
+                ## Then check if it is either left or right
+                
+                ## Chosen cell is left
+                if chosen_cell[0] + 1 == i:
+                    self._cells[i][j].has_left_wall = False
+                    self._cells[i - 1][j].has_right_wall = False
+                    self._break_walls_r(i - 1, j)
+                else:
+                ## Chosen cell is right               
+                    self._cells[i][j].has_right_wall = False
+                    self._cells[i + 1][j].has_left_wall = False
+                    self._break_walls_r(i + 1, j)
+
+            ## Check if chosen cell shares top or bottom
+            if chosen_cell[0] == i:
+                ## Then check if it is either top or bottom
+            
+                ## Chosen cell is top
+                if chosen_cell[1] + 1 == j:
+                    self._cells[i][j].has_top_wall = False
+                    self._cells[i][j - 1].has_bottom_wall = False
+                    self._break_walls_r(i, j - 1)
+                else:
+                ## Chosen cell is bottom
+                    self._cells[i][j].has_bottom_wall = False
+                    self._cells[i][j + 1].has_top_wall = False
+                    self._break_walls_r(i, j + 1)
+
+
 def main():
 
     ## Create a window
     win = Window(800, 600, "Maze Solver")
    
-    num_cols = 12
-    num_rows = 10
-    m1 = Maze(0, 0, num_rows, num_cols, 40, 40, win)
+    num_cols = 10
+    num_rows = 12
+    m1 = Maze(0, 0, num_rows, num_cols, 40, 40, win, seed=0)
     m1._break_entrance_and_exit()
+    m1._break_walls_r(0, 0)
+
+
     win.wait_for_close()
 
 
