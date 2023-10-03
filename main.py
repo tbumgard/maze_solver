@@ -99,7 +99,7 @@ class Cell:
                                         Point(((to_cell.get_x1() + to_cell.get_x2()) / 2 + x_offset),
                                               ((to_cell.get_y1() + to_cell.get_y2()) / 2 + y_offset))), color)
     def __repr__(self):
-        return (f"x1: {self.__x1}, x2: {self.__x2}, y1: {self.__y1}, y2: {self.__y2}")
+        return (f"x1: {self.__x1}, x2: {self.__x2}, y1: {self.__y1}, y2: {self.__y2}, visited: {self.visited}")
 
 class Maze:
     def __init__(
@@ -228,17 +228,27 @@ class Maze:
                     self._cells[i][j + 1].has_top_wall = False
                     self._break_walls_r(i, j + 1)
 
+    def _reset_cells_visited(self):
+        
+        for col in self._cells:
+            for row in col:
+                row.visited = False
 
 def main():
 
     ## Create a window
     win = Window(800, 600, "Maze Solver")
    
-    num_cols = 10
-    num_rows = 12
+    num_cols = 5
+    num_rows = 5
     m1 = Maze(0, 0, num_rows, num_cols, 40, 40, win, seed=0)
     m1._break_entrance_and_exit()
     m1._break_walls_r(0, 0)
+    m1._reset_cells_visited()
+
+    for col in m1._cells:
+        for row in col:
+            print(row)
 
 
     win.wait_for_close()
