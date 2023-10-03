@@ -4,7 +4,7 @@ from tkinter import Tk, BOTH, Canvas
 class Window:
     def __init__(self, width, height, title):
         self.__root = Tk(className=title)
-        self.__new_canvas = Canvas(self.__root, width=width, height=height, )
+        self.__new_canvas = Canvas(self.__root, width=width, height=height, background="white",)
         self.__new_canvas.pack()
         self.__running = True
         self.__root.protocol("WM_DELETE_WINDOW", self.close)
@@ -51,7 +51,7 @@ class Line:
         canvas.create_line(self.__point1.get_x(), self.__point1.get_y(), self.__point2.get_x(), self.__point2.get_y(), fill = fill_color, width = 2)
 
 class Cell:
-    def __init__(self, x1, x2, y1, y2, win, has_left_wall = True, has_right_wall = True, has_top_wall = True, has_bottom_wall = True):
+    def __init__(self, x1, x2, y1, y2, win=None, has_left_wall=True, has_right_wall=True, has_top_wall=True, has_bottom_wall=True):
         self.has_left_wall = has_left_wall
         self.has_right_wall = has_right_wall
         self.has_top_wall = has_top_wall
@@ -74,18 +74,17 @@ class Cell:
     def get_y2(self):
         return self.__y2
     
+    def wall_color(self, has_wall):
+        if has_wall:
+            return "black"
+        return "white"
+    
     def draw(self, x_offset=0, y_offset=0):
-        if self.has_left_wall:
-            self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y1 + y_offset), Point(self.__x1 + x_offset, self.__y2 + y_offset)), "black")
-
-        if self.has_right_wall:
-            self.__win.draw_line(Line(Point(self.__x2 + x_offset, self.__y1 + y_offset), Point(self.__x2 + x_offset, self.__y2 + y_offset)), "black")
-
-        if self.has_top_wall:
-            self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y1 + y_offset), Point(self.__x2 + x_offset, self.__y1 + y_offset)), "black")
-            
-        if self.has_bottom_wall:
-            self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y2 + y_offset), Point(self.__x2 + x_offset, self.__y2 + y_offset)), "black")
+        
+        self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y1 + y_offset), Point(self.__x1 + x_offset, self.__y2 + y_offset)), self.wall_color(self.has_left_wall))
+        self.__win.draw_line(Line(Point(self.__x2 + x_offset, self.__y1 + y_offset), Point(self.__x2 + x_offset, self.__y2 + y_offset)), self.wall_color(self.has_right_wall))
+        self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y1 + y_offset), Point(self.__x2 + x_offset, self.__y1 + y_offset)), self.wall_color(self.has_top_wall))
+        self.__win.draw_line(Line(Point(self.__x1 + x_offset, self.__y2 + y_offset), Point(self.__x2 + x_offset, self.__y2 + y_offset)), self.wall_color(self.has_bottom_wall))
 
     def draw_move(self, to_cell, undo=False, x_offset=0, y_offset=0):
         if undo:
@@ -109,7 +108,7 @@ class Maze:
             num_cols,
             cell_size_x,
             cell_size_y,
-            win
+            win=None
     ):
         self.__x1 = x1
         self.__y1 = y1
@@ -133,7 +132,7 @@ class Maze:
             self._cells.append(new_column)
                
         for i in range(self.__num_cols):
-            for j in range(self.__num_cols):
+            for j in range(self.__num_rows):
                 self._draw_cell(i, j)
                 
     def _draw_cell(self, i, j):
@@ -142,7 +141,7 @@ class Maze:
 
     def _animate(self):
         self.__win.redraw()
-        ##time.sleep(2)
+        time.sleep(0.05)
 
     def __repr__(self):
         output = ""
@@ -154,42 +153,21 @@ class Maze:
 
         return output
     
+    def _break_entrance_and_exit(self):
+        self._cells[0][0].has_top_wall = False
+        self._cells[self.__num_cols-1][self.__num_rows-1].has_bottom_wall = False
+        self._draw_cell(0, 0)
+        self._draw_cell(self.__num_cols - 1, self.__num_rows - 1)
+
 def main():
 
     ## Create a window
-    win = Window(800, 600, "Test Window")
+    win = Window(800, 600, "Maze Solver")
    
-    ## Create points
-    point1 = Point(700, 500)
-    point2 = Point(800, 600)
-    
-    ## Create  a line from the points
-    line1 = Line(point1, point2)
-    
-    ## Test - Draw the newly created line
-    win.draw_line(line1, "black")
-
-    ## Test - Create cells 
-    cell1 = Cell(10, 20, 10, 20, win)
-    cell2 = Cell(20, 30, 10, 20, win)
-    
-    print(cell1)
-    print(cell2)
-
-    ## Draw the cells
-    cell1.draw()
-    cell2.draw()
-
-    cell1.draw(100,100)
-    cell2.draw(100,100)
-    
-    ## Draw a line between the cells    
-    cell1.draw_move(cell2)
-    cell1.draw_move(cell2, False, 100, 100)
-
-    new_maze = Maze(400, 300, 5, 5, 50, 50, win)
-
-
+    num_cols = 12
+    num_rows = 10
+    m1 = Maze(0, 0, num_rows, num_cols, 40, 40, win)
+    m1._break_entrance_and_exit()
     win.wait_for_close()
 
 
